@@ -1,7 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
-import { useEffect, useState } from 'react';
+import { useFormStatus } from 'react-dom';
+import { useActionState, useEffect, useState } from 'react';
 import { getWeatherData } from '@/app/actions';
 import type { WeatherApiResponse } from '@/lib/types';
 import { Input } from '@/components/ui/input';
@@ -42,7 +42,7 @@ function FormResults({ state }: { state: WeatherApiResponse | undefined }) {
 
 export default function Home() {
   const { toast } = useToast();
-  const [state, formAction] = useFormState<WeatherApiResponse | undefined, FormData>(
+  const [state, formAction] = useActionState<WeatherApiResponse | undefined, FormData>(
     getWeatherData,
     undefined
   );
