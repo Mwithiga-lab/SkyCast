@@ -44,7 +44,7 @@ const generateCityBackgroundFlow = ai.defineFlow(
   async input => {
     const { media, text } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Generate a beautiful, high-resolution, photorealistic, wide-angle photograph of the skyline of ${input.city}. The image should be suitable as a background for a weather application.`,
+      prompt: `A photorealistic, wide-angle photograph of the skyline of ${input.city}, for a weather app background.`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
         safetySettings: [

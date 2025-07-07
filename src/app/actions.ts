@@ -61,15 +61,21 @@ export async function getWeatherData(
   } catch (error) {
     console.error('AI background generation failed:', error);
     
-    let displayError = `The AI could not generate a background for "${city}". Please try another city.`;
+    let displayError = `The AI could not generate a background for "${city}".`;
 
     if (error instanceof Error) {
         const errorMessage = error.message.toLowerCase();
-        if (errorMessage.includes('api key') || errorMessage.includes('failed_precondition')) {
+        if (errorMessage.includes('api key') || errorMessage.includes('permission denied') || errorMessage.includes('failed_precondition')) {
             displayError = 'The AI background service is not configured correctly. Please check your Google AI API key.';
-        } else if (errorMessage.includes('no media content was returned')) {
-            displayError = `The AI could not create a background for "${city}".`;
+        } else if (errorMessage.includes('no media content') || errorMessage.includes('no image content')) {
+            displayError = `The AI was unable to create an image for "${city}". The city may not be recognized or the request could not be fulfilled.`;
+        } else if (errorMessage.includes('deadline_exceeded')) {
+             displayError = 'The AI background service took too long to respond. Please try again.';
+        } else {
+            displayError += ' The background service may be temporarily unavailable.';
         }
+    } else {
+        displayError += ' An unexpected error occurred with the background service.';
     }
     
     return { weatherData, error: displayError };
