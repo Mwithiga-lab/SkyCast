@@ -37,30 +37,40 @@ export async function getWeatherData(
       error: 'The AI background service is not configured. Please get a Google AI API key and add it to your .env.local file.',
     };
   }
-
+  
+  let weatherData: WeatherData;
   try {
-    const [weatherResponse, backgroundResult] = await Promise.all([
-      fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${weatherApiKey}&units=metric`
-      ),
-      generateCityBackground({ city }),
-    ]);
+    const weatherResponse = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${weatherApiKey}&units=metric`
+    );
 
     if (!weatherResponse.ok) {
       const errorData = await weatherResponse.json();
       return { error: errorData.message || 'City not found.' };
     }
-
-    const weatherData: WeatherData = await weatherResponse.json();
-    const backgroundImage = backgroundResult.backgroundImage;
-
-    return { weatherData, backgroundImage };
+    weatherData = await weatherResponse.json();
   } catch (error) {
-    console.error(error);
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
-    if (typeof errorMessage === 'string' && (errorMessage.includes('API key not valid') || errorMessage.includes('FAILED_PRECONDITION'))) {
-        return { error: 'Your Google AI API key is invalid or missing. Please check the GOOGLE_API_KEY in your .env.local file.' };
-    }
-    return { error: `Failed to fetch data: ${errorMessage}` };
+    console.error('Weather fetch error:', error);
+    return { error: 'Failed to fetch weather data.' };
   }
+
+  let backgroundImage: string | undefined;
+  try {
+    const backgroundResult = await generateCityBackground({ city });
+    backgroundImage = backgroundResult.backgroundImage;
+  } catch (error) {
+    console.error('AI background generation failed:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+    let displayError = `Could not generate background: ${errorMessage}`;
+
+    if (errorMessage.includes('API key not valid') || errorMessage.includes('FAILED_PRECONDITION')) {
+        displayError = 'Your Google AI API key is invalid or missing. Please check the GOOGLE_API_KEY in your .env.local file.';
+    } else if (errorMessage.includes('No media content was returned')) {
+        displayError = `The AI could not generate a background for "${city}".`;
+    }
+    
+    return { weatherData, error: displayError };
+  }
+
+  return { weatherData, backgroundImage };
 }
