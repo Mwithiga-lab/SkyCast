@@ -1,6 +1,13 @@
 import type {NextConfig} from 'next';
 
-const nextConfig: NextConfig = {
+import withPWA from 'next-pwa';
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+const nextConfig: NextConfig = withPWA({
+  dest: 'public',
+  disable: !isProduction,
+})( {
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
@@ -18,6 +25,5 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-};
-
-export default nextConfig;
+}
+);
