@@ -44,11 +44,12 @@ SkyCast is a clean and intuitive web application that lets users search any city
    npm install
    ```
 
-3. Add your API key:
-   Create a `.env.local` file and add:
+3. Add your API keys:
+   Create a `.env.local` file in the root of your project and add your API keys. You can get them from [OpenWeatherMap](https://openweathermap.org/api) and [Google AI Studio](https://aistudio.google.com/app/apikey).
 
-   ```
-   NEXT_PUBLIC_WEATHER_API_KEY=your_openweathermap_api_key
+   ```env
+   OPENWEATHERMAP_API_KEY="your_openweathermap_api_key"
+   GOOGLE_API_KEY="your_google_api_key"
    ```
 
 4. Run the app locally:

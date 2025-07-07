@@ -23,19 +23,25 @@ export async function getWeatherData(
   }
 
   const city = validatedFields.data.city;
-  const apiKey = process.env.OPENWEATHERMAP_API_KEY;
+  const weatherApiKey = process.env.OPENWEATHERMAP_API_KEY;
+  const googleApiKey = process.env.GOOGLE_API_KEY;
 
-  if (!apiKey || apiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
-    console.error('OpenWeatherMap API key is not set.');
+  if (!weatherApiKey || weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
     return {
-      error: 'The weather service is not configured. Please create a .env.local file with your OPENWEATHERMAP_API_KEY.',
+      error: 'The weather service is not configured. Please add your OPENWEATHERMAP_API_KEY to the .env.local file.',
+    };
+  }
+
+  if (!googleApiKey || googleApiKey.includes('YOUR_GOOGLE_API_KEY')) {
+    return {
+      error: 'The AI background service is not configured. Please get a Google AI API key and add it to your .env.local file.',
     };
   }
 
   try {
     const [weatherResponse, backgroundResult] = await Promise.all([
       fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${weatherApiKey}&units=metric`
       ),
       generateCityBackground({ city }),
     ]);
@@ -52,6 +58,9 @@ export async function getWeatherData(
   } catch (error) {
     console.error(error);
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+    if (typeof errorMessage === 'string' && (errorMessage.includes('API key not valid') || errorMessage.includes('FAILED_PRECONDITION'))) {
+        return { error: 'Your Google AI API key is invalid or missing. Please check the GOOGLE_API_KEY in your .env.local file.' };
+    }
     return { error: `Failed to fetch data: ${errorMessage}` };
   }
 }
