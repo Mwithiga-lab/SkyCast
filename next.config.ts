@@ -4,10 +4,7 @@ import withPWA from 'next-pwa';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-const nextConfig: NextConfig = withPWA({
-  dest: 'public',
-  disable: !isProduction,
-})( {
+const nextConfig: NextConfig = withPWA({ dest: 'public', disable: !isProduction })( {
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
