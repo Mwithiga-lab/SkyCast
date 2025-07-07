@@ -54,20 +54,18 @@ export async function getWeatherData(
     return { error: 'Failed to fetch weather data.' };
   }
 
-  let backgroundImage: string | undefined;
-  try {
-    const backgroundResult = await generateCityBackground({ city });
-    backgroundImage = backgroundResult.backgroundImage;
-  } catch (error) {
+  const backgroundResult = await generateCityBackground({ city });
+
+  if (backgroundResult.error) {
     // Log the detailed error for server-side debugging.
-    console.error('AI background generation failed:', error);
+    console.error('AI background generation failed:', backgroundResult.error);
     
-    // Create a simple, static error message to avoid any serialization issues with the error object.
+    // Create a simple, static error message to avoid any serialization issues.
     const displayError = `The AI background service failed to generate an image for "${city}". This can happen if the city is not recognized or due to service restrictions. Please try a different city.`;
     
     // Return the weather data with a clear error message about the background failure.
     return { weatherData, error: displayError };
   }
 
-  return { weatherData, backgroundImage };
+  return { weatherData, backgroundImage: backgroundResult.backgroundImage };
 }

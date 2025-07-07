@@ -21,9 +21,11 @@ export type GenerateCityBackgroundInput = z.infer<
 const GenerateCityBackgroundOutputSchema = z.object({
   backgroundImage: z
     .string()
+    .optional()
     .describe(
       'A data URI containing the generated background image for the city.'
     ),
+  error: z.string().optional().describe('An error message if image generation failed.'),
 });
 export type GenerateCityBackgroundOutput = z.infer<
   typeof GenerateCityBackgroundOutputSchema
@@ -41,27 +43,32 @@ const generateCityBackgroundFlow = ai.defineFlow(
     inputSchema: GenerateCityBackgroundInputSchema,
     outputSchema: GenerateCityBackgroundOutputSchema,
   },
-  async input => {
-    const { media, text } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `A beautiful, photorealistic, wide-angle photo of the skyline of the city of ${input.city}. This is for a weather app background. The image should be scenic and high quality.`,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-        safetySettings: [
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-        ],
-      },
-    });
+  async (input): Promise<GenerateCityBackgroundOutput> => {
+    try {
+      const { media, text } = await ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: `A beautiful, photorealistic, wide-angle photo of the skyline of the city of ${input.city}. This is for a weather app background. The image should be scenic and high quality.`,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+          safetySettings: [
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+          ],
+        },
+      });
 
-    if (!media?.url) {
-      const reason = text || 'No media content was returned from the AI model.';
-      console.error("Image generation failed:", reason);
-      throw new Error(`Failed to generate background. Reason: ${reason}`);
+      if (!media?.url) {
+        const reason = text || 'No media content was returned from the AI model.';
+        console.error("Image generation failed:", reason);
+        return { error: `Failed to generate background. Reason: ${reason}` };
+      }
+
+      return {backgroundImage: media.url};
+    } catch (e: any) {
+        console.error("Critical error in image generation flow:", e);
+        return { error: 'An unexpected error occurred during image generation.' };
     }
-
-    return {backgroundImage: media.url};
   }
 );
