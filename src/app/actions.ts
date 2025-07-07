@@ -62,26 +62,8 @@ export async function getWeatherData(
     // Log the detailed error for server-side debugging.
     console.error('AI background generation failed:', error);
     
-    // Create a safe, user-friendly error message. This is more defensive to prevent serialization errors.
-    let displayError: string;
-
-    if (error instanceof Error && error.message) {
-      const msg = error.message.toLowerCase();
-      if (msg.includes('api key') || msg.includes('permission denied') || msg.includes('failed_precondition')) {
-        displayError = 'The AI background service API key is invalid or missing. Please check your .env.local file.';
-      } else if (msg.includes('deadline_exceeded')) {
-        displayError = 'The AI background service timed out. Please try again.';
-      } else if (msg.includes('no media content') || msg.includes('no image content')) {
-        displayError = `The AI was unable to create an image for "${city}". It may not be a recognized city.`;
-      }
-      else {
-        // A catch-all for other errors from the AI service.
-        displayError = `The AI background service failed. Please try a different city.`;
-      }
-    } else {
-      // Fallback for unexpected, non-Error objects.
-      displayError = 'An unknown error occurred with the AI background service.';
-    }
+    // Create a simple, static error message to avoid any serialization issues with the error object.
+    const displayError = `The AI background service failed to generate an image for "${city}". This can happen if the city is not recognized or due to service restrictions. Please try a different city.`;
     
     // Return the weather data with a clear error message about the background failure.
     return { weatherData, error: displayError };
