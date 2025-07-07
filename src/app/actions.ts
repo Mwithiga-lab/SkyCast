@@ -26,7 +26,7 @@ export async function getWeatherData(
   const weatherApiKey = process.env.OPENWEATHERMAP_API_KEY;
   const googleApiKey = process.env.GOOGLE_API_KEY;
 
-  if (!weatherApiKey || weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
+  if (!weatherApiKey || weatherApiKey.includes('YOUR_OPENWEATHERMAP_API_KEY')) {
     return {
       error: 'The weather service is not configured. Please add your OPENWEATHERMAP_API_KEY to the .env.local file.',
     };
@@ -59,25 +59,31 @@ export async function getWeatherData(
     const backgroundResult = await generateCityBackground({ city });
     backgroundImage = backgroundResult.backgroundImage;
   } catch (error) {
+    // Log the detailed error for server-side debugging.
     console.error('AI background generation failed:', error);
     
-    let displayError = `The AI could not generate a background for "${city}".`;
+    // Create a safe, user-friendly error message. This is more defensive to prevent serialization errors.
+    let displayError: string;
 
-    if (error instanceof Error) {
-        const errorMessage = error.message.toLowerCase();
-        if (errorMessage.includes('api key') || errorMessage.includes('permission denied') || errorMessage.includes('failed_precondition')) {
-            displayError = 'The AI background service is not configured correctly. Please check your Google AI API key.';
-        } else if (errorMessage.includes('no media content') || errorMessage.includes('no image content')) {
-            displayError = `The AI was unable to create an image for "${city}". The city may not be recognized or the request could not be fulfilled.`;
-        } else if (errorMessage.includes('deadline_exceeded')) {
-             displayError = 'The AI background service took too long to respond. Please try again.';
-        } else {
-            displayError += ' The background service may be temporarily unavailable.';
-        }
+    if (error instanceof Error && error.message) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes('api key') || msg.includes('permission denied') || msg.includes('failed_precondition')) {
+        displayError = 'The AI background service API key is invalid or missing. Please check your .env.local file.';
+      } else if (msg.includes('deadline_exceeded')) {
+        displayError = 'The AI background service timed out. Please try again.';
+      } else if (msg.includes('no media content') || msg.includes('no image content')) {
+        displayError = `The AI was unable to create an image for "${city}". It may not be a recognized city.`;
+      }
+      else {
+        // A catch-all for other errors from the AI service.
+        displayError = `The AI background service failed. Please try a different city.`;
+      }
     } else {
-        displayError += ' An unexpected error occurred with the background service.';
+      // Fallback for unexpected, non-Error objects.
+      displayError = 'An unknown error occurred with the AI background service.';
     }
     
+    // Return the weather data with a clear error message about the background failure.
     return { weatherData, error: displayError };
   }
 
