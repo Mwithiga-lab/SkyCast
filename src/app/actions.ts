@@ -60,13 +60,16 @@ export async function getWeatherData(
     backgroundImage = backgroundResult.backgroundImage;
   } catch (error) {
     console.error('AI background generation failed:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
-    let displayError = `Could not generate background: ${errorMessage}`;
+    
+    let displayError = `The AI could not generate a background for "${city}". Please try another city.`;
 
-    if (errorMessage.includes('API key not valid') || errorMessage.includes('FAILED_PRECONDITION')) {
-        displayError = 'Your Google AI API key is invalid or missing. Please check the GOOGLE_API_KEY in your .env.local file.';
-    } else if (errorMessage.includes('No media content was returned')) {
-        displayError = `The AI could not generate a background for "${city}".`;
+    if (error instanceof Error) {
+        const errorMessage = error.message.toLowerCase();
+        if (errorMessage.includes('api key') || errorMessage.includes('failed_precondition')) {
+            displayError = 'The AI background service is not configured correctly. Please check your Google AI API key.';
+        } else if (errorMessage.includes('no media content was returned')) {
+            displayError = `The AI could not create a background for "${city}".`;
+        }
     }
     
     return { weatherData, error: displayError };
