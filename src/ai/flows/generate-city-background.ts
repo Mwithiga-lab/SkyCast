@@ -1,5 +1,3 @@
-// This file is machine-generated - edit at your own risk!
-
 'use server';
 
 /**
@@ -37,13 +35,6 @@ export async function generateCityBackground(
   return generateCityBackgroundFlow(input);
 }
 
-const generateCityBackgroundPrompt = ai.definePrompt({
-  name: 'generateCityBackgroundPrompt',
-  input: {schema: GenerateCityBackgroundInputSchema},
-  output: {schema: GenerateCityBackgroundOutputSchema},
-  prompt: `Generate a beautiful skyline background image for the city of {{city}}. The image should be a data URI.`, // Ensure the output is a data URI
-});
-
 const generateCityBackgroundFlow = ai.defineFlow(
   {
     name: 'generateCityBackgroundFlow',
@@ -51,16 +42,24 @@ const generateCityBackgroundFlow = ai.defineFlow(
     outputSchema: GenerateCityBackgroundOutputSchema,
   },
   async input => {
-    const {media} = await ai.generate({
+    const { media, text } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Generate a beautiful skyline background image for the city of ${input.city}.`,
+      prompt: `Generate a beautiful, photorealistic skyline of ${input.city}.`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
+        safetySettings: [
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        ],
       },
     });
 
     if (!media?.url) {
-      throw new Error('Failed to generate image');
+      const reason = text || 'No media content was returned from the AI model.';
+      console.error("Image generation failed:", reason);
+      throw new Error(`Failed to generate background. Reason: ${reason}`);
     }
 
     return {backgroundImage: media.url};
